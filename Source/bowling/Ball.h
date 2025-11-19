@@ -9,6 +9,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
+// Includes for the user input
+#include "InputMappingContext.h"
+#include "EnhancedInputSubsystems.h"
+
+
 #include "Ball.generated.h"
 
 UCLASS()
@@ -31,9 +36,18 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+
 	UPROPERTY(VisibleAnywhere) UCapsuleComponent* CapsuleComp;
 	UPROPERTY(VisibleAnywhere) USpringArmComponent* SpringArmComp;
 	UPROPERTY(VisibleAnywhere) UCameraComponent* CameraComp;
 
+	UPROPERTY(EditAnywhere, Category = "Input") UInputMappingContext* DefaultMappingContext;
+	UPROPERTY(EditAnywhere, Category = "Input") UInputAction* MoveAction;
+	UPROPERTY(EditAnywhere, Category = "Input") UInputAction* ThrowAction;
 
+
+	UPROPERTY(EditAnywhere) float Speed = 50.0f;
+
+	void MoveInput(const FInputActionValue& Value);
+	void ThrowInput(const FInputActionValue& Value);
 };
