@@ -18,7 +18,8 @@ APin::APin()
 void APin::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	InitialTransform = GetActorTransform();
+
 }
 
 // Called every frame
@@ -28,3 +29,16 @@ void APin::Tick(float DeltaTime)
 
 }
 
+void APin::ResetPinLocation()
+{
+	SetActorTransform(InitialTransform);
+}
+
+bool APin::ShouldBeRemoved() const
+{
+    bool IsFallen = FVector::DotProduct(GetActorUpVector(), FVector::UpVector) < FMath::Cos(FMath::DegreesToRadians(5.0f));
+    float Distance2D = FVector::Dist2D(GetActorLocation(), InitialTransform.GetLocation());
+    bool IsMoved = Distance2D > 2.0f;
+
+    return IsFallen || IsMoved;
+}

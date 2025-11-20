@@ -20,9 +20,15 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	FTransform InitialTransform;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	bool IsRemoved = false;
+
+	bool ShouldBeRemoved() const;
+	void ResetPinLocation();
+
 
 };

@@ -38,7 +38,7 @@ public:
 
 
 	UPROPERTY(VisibleAnywhere) USphereComponent* SphereComp;
-	UPROPERTY(VisibleAnywhere) USceneComponent* SpingArmAnchor;
+	UPROPERTY(VisibleAnywhere) USceneComponent* SpringArmAnchor;
 	UPROPERTY(VisibleAnywhere) USpringArmComponent* SpringArmComp;
 	UPROPERTY(VisibleAnywhere) UCameraComponent* CameraComp;
 
@@ -57,7 +57,10 @@ public:
 	void RotatePlayer(FVector TargetPosition);
 
 	bool IsBallRolling = false;
+	bool IsCameraFixed = false;
+	FVector FixedCameraPosition;
+
 	FVector StartPosition;
 	UPROPERTY(EditAnywhere) float CameraMovementStopsAfterDistance = 1400.0f;
-	FVector LastSpingArmAnchor;
+	FVector LastSpringArmAnchor;
 };

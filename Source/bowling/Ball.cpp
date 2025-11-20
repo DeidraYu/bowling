@@ -14,18 +14,18 @@ ABall::ABall()
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SetRootComponent(SphereComp);
 
-	SpingArmAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("SpingArmAnchor"));
-	SpingArmAnchor->SetupAttachment(SphereComp);
+	SpringArmAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("SpingArmAnchor"));
+	SpringArmAnchor->SetupAttachment(SphereComp);
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
-	SpringArmComp->SetupAttachment(SpingArmAnchor);
+	SpringArmComp->SetupAttachment(SpringArmAnchor);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
 
 
-	SpingArmAnchor->PrimaryComponentTick.bCanEverTick = true;
-	SpingArmAnchor->PrimaryComponentTick.TickGroup = TG_PostPhysics;
+	SpringArmAnchor->PrimaryComponentTick.bCanEverTick = true;
+	SpringArmAnchor->PrimaryComponentTick.TickGroup = TG_PostPhysics;
 }
 
 
@@ -56,7 +56,7 @@ void ABall::Tick(float DeltaTime)
 
 
 	// Check if the Anchor component is valid
-	if (SpingArmAnchor) // Assuming this is the UPROPERTY reference to your USceneComponent
+	if (SpringArmAnchor) // Assuming this is the UPROPERTY reference to your USceneComponent
 	{
 		FRotator StableRotation;
 		if (IsBallRolling)
@@ -65,41 +65,54 @@ void ABall::Tick(float DeltaTime)
 		}
 		else
 		{
-			// 1. Get the current world rotation (which includes inherited rotation from the sphere)
-			FRotator CurrentRotation = SpingArmAnchor->GetComponentRotation();
-
-			// 2. Define the new, stable rotation: 
-			//    Pitch (Y) = 0.0f (no tilt up/down)
-			//    Yaw (Z) = CurrentRotation.Yaw (keep the aiming angle)
-			//    Roll (X) = 0.0f (no side-to-side spinning/tumbling)
+			// Only use the Yaw angle from the SpringArmAnchor
+			FRotator CurrentRotation = SpringArmAnchor->GetComponentRotation();
 			StableRotation = FRotator(0.0f, CurrentRotation.Yaw, 0.0f);
 		}
 
-		// 3. Force the Anchor to use this stable rotation
-		SpingArmAnchor->SetWorldRotation(StableRotation);
-
-
+		SpringArmAnchor->SetWorldRotation(StableRotation);
 
 
 		float BallTraveledDistance = FVector::Dist(GetActorLocation(), StartPosition);
-		if (BallTraveledDistance < CameraMovementStopsAfterDistance)
+		if (!IsCameraFixed && BallTraveledDistance >= CameraMovementStopsAfterDistance)
 		{
-			LastSpingArmAnchor = SpingArmAnchor->GetComponentLocation();
+			IsCameraFixed = true;
+			// FixedCameraPosition = CameraComp->GetComponentLocation();
+			FixedCameraPosition = SpringArmAnchor->GetComponentLocation();
+			SpringArmAnchor->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		}
-		else
+
+		if (IsCameraFixed)
 		{
-			SpingArmAnchor->SetWorldLocation(LastSpingArmAnchor);
+			// CameraComp->SetWorldLocation(FixedCameraPosition);
+			SpringArmAnchor->SetWorldLocation(FixedCameraPosition);
 		}
+
+
+		//if (BallTraveledDistance < CameraMovementStopsAfterDistance)
+		//{
+		//	// LastSpringArmAnchor = SpringArmAnchor->GetComponentLocation();
+		//	LastSpringArmAnchor = CameraComp->GetComponentLocation();
+
+		//}
+		//else
+		//{
+		//	// SpringArmAnchor->SetWorldLocation(LastSpringArmAnchor);
+		//	CameraComp->SetWorldLocation(LastSpringArmAnchor);
+		//}
 
 	}
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	if (!IsBallRolling)
 	{
-		FHitResult HitResult;
-		if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+		if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 		{
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5, 12, FColor::Green);
-			RotatePlayer(HitResult.ImpactPoint);
+			FHitResult HitResult;
+			if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+			{
+				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5, 12, FColor::Green);
+				RotatePlayer(HitResult.ImpactPoint);
+			}
 		}
 	}
 
@@ -135,7 +148,7 @@ void ABall::ThrowInput(const FInputActionValue& Value)
 	// The LaunchSpeed argument will be the value you pass from your controller (e.g., 500.0f).
 
 		// 1. Safety Check: Ensure the component exists and is simulating physics.
-	if (SphereComp && SphereComp->IsSimulatingPhysics())
+	if (!IsBallRolling && SphereComp && SphereComp->IsSimulatingPhysics())
 	{
 		IsBallRolling = true;
 		// 2. Determine the launch direction.
