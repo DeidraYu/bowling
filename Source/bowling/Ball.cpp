@@ -10,16 +10,22 @@ ABall::ABall()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 	
-	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
-	SetRootComponent(CapsuleComp);
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SetRootComponent(SphereComp);
+
+	SpingArmAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("SpingArmAnchor"));
+	SpingArmAnchor->SetupAttachment(SphereComp);
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
-	SpringArmComp->SetupAttachment(CapsuleComp);
+	SpringArmComp->SetupAttachment(SpingArmAnchor);
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
+
+
+	SpingArmAnchor->PrimaryComponentTick.bCanEverTick = true;
+	SpingArmAnchor->PrimaryComponentTick.TickGroup = TG_PostPhysics;
 }
 
 
@@ -39,12 +45,63 @@ void ABall::BeginPlay()
 		}
 	}
 
+	StartPosition = GetActorLocation();
+
 }
 
 // Called every frame
 void ABall::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+
+	// Check if the Anchor component is valid
+	if (SpingArmAnchor) // Assuming this is the UPROPERTY reference to your USceneComponent
+	{
+		FRotator StableRotation;
+		if (IsBallRolling)
+		{
+			StableRotation = FRotator(0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			// 1. Get the current world rotation (which includes inherited rotation from the sphere)
+			FRotator CurrentRotation = SpingArmAnchor->GetComponentRotation();
+
+			// 2. Define the new, stable rotation: 
+			//    Pitch (Y) = 0.0f (no tilt up/down)
+			//    Yaw (Z) = CurrentRotation.Yaw (keep the aiming angle)
+			//    Roll (X) = 0.0f (no side-to-side spinning/tumbling)
+			StableRotation = FRotator(0.0f, CurrentRotation.Yaw, 0.0f);
+		}
+
+		// 3. Force the Anchor to use this stable rotation
+		SpingArmAnchor->SetWorldRotation(StableRotation);
+
+
+
+
+		float BallTraveledDistance = FVector::Dist(GetActorLocation(), StartPosition);
+		if (BallTraveledDistance < CameraMovementStopsAfterDistance)
+		{
+			LastSpingArmAnchor = SpingArmAnchor->GetComponentLocation();
+		}
+		else
+		{
+			SpingArmAnchor->SetWorldLocation(LastSpingArmAnchor);
+		}
+
+	}
+
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		FHitResult HitResult;
+		if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+		{
+			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5, 12, FColor::Green);
+			RotatePlayer(HitResult.ImpactPoint);
+		}
+	}
 
 }
 
@@ -55,7 +112,7 @@ void ABall::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	if (UEnhancedInputComponent* EnhancedPlayerInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		EnhancedPlayerInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABall::MoveInput);
-		EnhancedPlayerInputComponent->BindAction(ThrowAction, ETriggerEvent::Triggered, this, &ABall::ThrowInput);
+		EnhancedPlayerInputComponent->BindAction(ThrowAction, ETriggerEvent::Started, this, &ABall::ThrowInput);
 
 	}
 
@@ -68,11 +125,58 @@ void ABall::MoveInput(const FInputActionValue& Value)
 	float DeltaTime = UGameplayStatics::GetWorldDeltaSeconds(GetWorld());
 
 	FVector DeltaLocation = FVector(0.0f, 1.0f, 0.0f);
-	DeltaLocation *= Speed * InputValue * DeltaTime;
+	DeltaLocation *= LeftRightSpeed * InputValue * DeltaTime;
 	AddActorLocalOffset(DeltaLocation, true);
 }
 
 void ABall::ThrowInput(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("Throw!"));
+	// The LaunchSpeed argument will be the value you pass from your controller (e.g., 500.0f).
+
+		// 1. Safety Check: Ensure the component exists and is simulating physics.
+	if (SphereComp && SphereComp->IsSimulatingPhysics())
+	{
+		IsBallRolling = true;
+		// 2. Determine the launch direction.
+		// GetActorForwardVector() uses the Actor's current Yaw (aiming) direction.
+		FVector LaunchDirection = GetActorForwardVector();
+
+		// 3. Calculate the Impulse Vector.
+		// Impulse = Mass * Desired Change in Velocity (LaunchSpeed).
+		// Multiplying by mass makes the impulse relative to the object's weight.
+		FVector Impulse = LaunchDirection * ThrowSpeed * SphereComp->GetMass();
+
+		// 4. Apply the impulse force to the physics body.
+		SphereComp->AddImpulse(Impulse, NAME_None, true);
+
+		// Optional: Apply angular impulse for a starting spin (hook/curve)
+		// If you want a slight hook, you can add a small torque around the Z (vertical) axis.
+		// FVector SpinImpulse = FVector(0.0f, 0.0f, -200.0f); // Adjust Z value for spin amount
+		// SphereComp->AddAngularImpulseInDegrees(SpinImpulse, NAME_None, true);
+	}
 }
 
+void ABall::RotatePlayer(FVector TargetPosition)
+{
+	if (!IsBallRolling)
+	{
+		FVector VectorToTarget = TargetPosition - SphereComp->GetComponentLocation();
+		FRotator YawAngle = VectorToTarget.Rotation();
+		YawAngle.Pitch = 0;
+
+		FRotator InterpolatedRotation = FMath::RInterpTo(SphereComp->GetComponentRotation(), YawAngle, GetWorld()->GetDeltaSeconds(), 0.5f);
+
+		float MaximalAbsoluteYawAngle = 5.0f;
+		if (InterpolatedRotation.Yaw < -MaximalAbsoluteYawAngle)
+		{
+			InterpolatedRotation.Yaw = -MaximalAbsoluteYawAngle;
+		}
+		else if (InterpolatedRotation.Yaw > MaximalAbsoluteYawAngle) {
+			InterpolatedRotation.Yaw = MaximalAbsoluteYawAngle;
+		}
+
+		SphereComp->SetWorldRotation(InterpolatedRotation);
+		// SetActorRotation(InterpolatedRotation);
+	}
+}

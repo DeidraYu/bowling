@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
-#include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 
@@ -37,7 +37,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
-	UPROPERTY(VisibleAnywhere) UCapsuleComponent* CapsuleComp;
+	UPROPERTY(VisibleAnywhere) USphereComponent* SphereComp;
+	UPROPERTY(VisibleAnywhere) USceneComponent* SpingArmAnchor;
 	UPROPERTY(VisibleAnywhere) USpringArmComponent* SpringArmComp;
 	UPROPERTY(VisibleAnywhere) UCameraComponent* CameraComp;
 
@@ -46,8 +47,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input") UInputAction* ThrowAction;
 
 
-	UPROPERTY(EditAnywhere) float Speed = 50.0f;
+	UPROPERTY(EditAnywhere) float LeftRightSpeed = 50.0f;
+	UPROPERTY(EditAnywhere) float ThrowSpeed = 50.0f;
+
 
 	void MoveInput(const FInputActionValue& Value);
 	void ThrowInput(const FInputActionValue& Value);
+
+	void RotatePlayer(FVector TargetPosition);
+
+	bool IsBallRolling = false;
+	FVector StartPosition;
+	UPROPERTY(EditAnywhere) float CameraMovementStopsAfterDistance = 1400.0f;
+	FVector LastSpingArmAnchor;
 };
