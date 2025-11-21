@@ -28,12 +28,27 @@ ABall::ABall()
 	SpringArmAnchor->PrimaryComponentTick.TickGroup = TG_PostPhysics;
 }
 
+void ABall::OnOverlapStopZone(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// Controleer op de "STOP" Tag op de overlappende Actor
+	if (OtherActor && OtherActor->ActorHasTag(TEXT("STOP")))
+	{
+		// Gebruik de OverlappedComp om de snelheid op nul te zetten
+		if (OverlappedComp->IsSimulatingPhysics())
+		{
+			// Reset de snelheid van de bal direct
+			OverlappedComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+			OverlappedComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		}
+	}
+}
 
 // Called when the game starts or when spawned
 void ABall::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	InitialTransform = GetActorTransform();
+
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
 		if (ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
@@ -43,6 +58,12 @@ void ABall::BeginPlay()
 				Subsystem->AddMappingContext(DefaultMappingContext, 0);
 			}
 		}
+	}
+
+
+	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(RootComponent))
+	{
+		PrimitiveComponent->OnComponentBeginOverlap.AddDynamic(this, &ABall::OnOverlapStopZone);
 	}
 
 	StartPosition = GetActorLocation();
@@ -77,30 +98,14 @@ void ABall::Tick(float DeltaTime)
 		if (!IsCameraFixed && BallTraveledDistance >= CameraMovementStopsAfterDistance)
 		{
 			IsCameraFixed = true;
-			// FixedCameraPosition = CameraComp->GetComponentLocation();
 			FixedCameraPosition = SpringArmAnchor->GetComponentLocation();
 			SpringArmAnchor->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 		}
 
 		if (IsCameraFixed)
 		{
-			// CameraComp->SetWorldLocation(FixedCameraPosition);
 			SpringArmAnchor->SetWorldLocation(FixedCameraPosition);
 		}
-
-
-		//if (BallTraveledDistance < CameraMovementStopsAfterDistance)
-		//{
-		//	// LastSpringArmAnchor = SpringArmAnchor->GetComponentLocation();
-		//	LastSpringArmAnchor = CameraComp->GetComponentLocation();
-
-		//}
-		//else
-		//{
-		//	// SpringArmAnchor->SetWorldLocation(LastSpringArmAnchor);
-		//	CameraComp->SetWorldLocation(LastSpringArmAnchor);
-		//}
-
 	}
 
 	if (!IsBallRolling)
@@ -145,28 +150,13 @@ void ABall::MoveInput(const FInputActionValue& Value)
 void ABall::ThrowInput(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Display, TEXT("Throw!"));
-	// The LaunchSpeed argument will be the value you pass from your controller (e.g., 500.0f).
 
-		// 1. Safety Check: Ensure the component exists and is simulating physics.
 	if (!IsBallRolling && SphereComp && SphereComp->IsSimulatingPhysics())
 	{
 		IsBallRolling = true;
-		// 2. Determine the launch direction.
-		// GetActorForwardVector() uses the Actor's current Yaw (aiming) direction.
 		FVector LaunchDirection = GetActorForwardVector();
-
-		// 3. Calculate the Impulse Vector.
-		// Impulse = Mass * Desired Change in Velocity (LaunchSpeed).
-		// Multiplying by mass makes the impulse relative to the object's weight.
 		FVector Impulse = LaunchDirection * ThrowSpeed * SphereComp->GetMass();
-
-		// 4. Apply the impulse force to the physics body.
 		SphereComp->AddImpulse(Impulse, NAME_None, true);
-
-		// Optional: Apply angular impulse for a starting spin (hook/curve)
-		// If you want a slight hook, you can add a small torque around the Z (vertical) axis.
-		// FVector SpinImpulse = FVector(0.0f, 0.0f, -200.0f); // Adjust Z value for spin amount
-		// SphereComp->AddAngularImpulseInDegrees(SpinImpulse, NAME_None, true);
 	}
 }
 
@@ -190,6 +180,22 @@ void ABall::RotatePlayer(FVector TargetPosition)
 		}
 
 		SphereComp->SetWorldRotation(InterpolatedRotation);
-		// SetActorRotation(InterpolatedRotation);
 	}
+}
+
+void ABall::ResetBallLocation()
+{
+	SetActorTransform(InitialTransform);
+	SpringArmAnchor->AttachToComponent(SphereComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	
+	SpringArmAnchor->SetRelativeRotation(FRotator::ZeroRotator);
+	SpringArmAnchor->SetRelativeLocation(FVector::ZeroVector);
+
+	SphereComp->SetSimulatePhysics(false);
+	IsBallRolling = false;
+	IsCameraFixed = false;
+	SphereComp->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	SphereComp->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	SphereComp->SetSimulatePhysics(true);
+
 }

@@ -25,6 +25,11 @@ public:
 	// Sets default values for this pawn's properties
 	ABall();
 
+
+private:
+	// UFUNCTION is nodig om deze functie te binden aan een delegate
+	UFUNCTION() void OnOverlapStopZone(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,4 +68,8 @@ public:
 	FVector StartPosition;
 	UPROPERTY(EditAnywhere) float CameraMovementStopsAfterDistance = 1400.0f;
 	FVector LastSpringArmAnchor;
+
+	FTransform InitialTransform;
+	void ResetBallLocation();
+
 };
