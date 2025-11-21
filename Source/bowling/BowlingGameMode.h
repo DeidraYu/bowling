@@ -50,18 +50,17 @@ public:
 
 	void TriggerGameOver();
 	void OnGameOverTimerTimeout();
-	
-
-	
+		
 	int32 RollFinished();
 
-	int32 TotalScore = 0;
 
 	UPROPERTY(EditAnywhere) int32 NumFrames = 10;
 
 	void Roll(int32 RollScore);
-	int32 Score() const;
+	int32 Score();
 	void DrawScores();
+	void ComputeScoresPass1();
+	int32 ComputeScoresPass2();
 
 
 	// The frames are numbered 0, 1, ..., NumFrames-1
@@ -81,5 +80,9 @@ public:
 
 	UPROPERTY()
 	TArray<UFrameScore*> FrameScores;
+	FString CreateSeparatorSting(FString LeftSep, FString InnerSep, FString RightSep) const;
+	FString CreateFrameNumbersString() const;
+	FString CreateRollScoresString() const;
+	FString CreateFrameScoresString() const;
 	
 };

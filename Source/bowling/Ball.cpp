@@ -8,9 +8,9 @@
 // Sets default values
 ABall::ABall()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
 	SetRootComponent(SphereComp);
 
@@ -149,8 +149,6 @@ void ABall::MoveInput(const FInputActionValue& Value)
 
 void ABall::ThrowInput(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("Throw!"));
-
 	if (!IsBallRolling && SphereComp && SphereComp->IsSimulatingPhysics())
 	{
 		IsBallRolling = true;
@@ -187,7 +185,7 @@ void ABall::ResetBallLocation()
 {
 	SetActorTransform(InitialTransform);
 	SpringArmAnchor->AttachToComponent(SphereComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	
+
 	SpringArmAnchor->SetRelativeRotation(FRotator::ZeroRotator);
 	SpringArmAnchor->SetRelativeLocation(FVector::ZeroVector);
 

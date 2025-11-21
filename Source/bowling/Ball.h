@@ -51,10 +51,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input") UInputAction* MoveAction;
 	UPROPERTY(EditAnywhere, Category = "Input") UInputAction* ThrowAction;
 
-
 	UPROPERTY(EditAnywhere) float LeftRightSpeed = 50.0f;
-	UPROPERTY(EditAnywhere) float ThrowSpeed = 50.0f;
-
+	UPROPERTY(EditAnywhere) float ThrowSpeed = 160.0f;
 
 	void MoveInput(const FInputActionValue& Value);
 	void ThrowInput(const FInputActionValue& Value);
