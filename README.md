@@ -16,6 +16,14 @@ git clone https://github.com/DeidraYu/bowling.git
 
 Double-click on `bowling.uproject` to open it in the Unreal Editor
 
+## Playing the game
+
+- Use `A` and `D` keys for moving left and right.
+- Use the mouse pointer to rotate the direction the ball is thrown into.
+  The ball is thrown straight forward on your screen, not toward the mouse! This is intentionally.
+- Use the left mouse button to throw (roll) the ball.
+- At this moment you can cheat by moving the ball left-right even when it is already rolling (a feature handy for debugging).
+
 ## Interpretation of the Assessment
 The combination of the Bowling Game Kata and the Unreal Engine 5.4 implementation of it suggests that a mini game must be implemented.
 
@@ -45,6 +53,8 @@ There is quite some further work to do to improve this game.
     On the other hand, the view of this depends very from team to team.
   - Fully check const-correctness
   - Changing all public member variables into private (or package) and using getters and setters to access them (now it is kind of mix).
+  - Naming conventions:
+    Because the real bowling games use the terms Roll and Frame, it is good to use them in code as well. However, sometimes this will be very confusing. For example, angles may be represented by (Pitch, Yaw, Roll), and the term Frame is higly overloaded for other things. Also, because the Kata asks to implement the Roll() function, the actually throwing of the ball should not be called Roll() because Roll() is reserved to adding only the scored pins per roll to the scoring system.
   - Minimize the shipping size of the executable package.
   - And probably many more.
 
