@@ -61,6 +61,17 @@ void ABall::BeginPlay()
 	}
 
 
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		// Show mouse pointer
+		PlayerController->bShowMouseCursor = true;
+
+		// This input mode prevents the engine from hiding/capturing the mouse
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		PlayerController->SetInputMode(InputMode);
+	}
+
 	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(RootComponent))
 	{
 		PrimitiveComponent->OnComponentBeginOverlap.AddDynamic(this, &ABall::OnOverlapStopZone);

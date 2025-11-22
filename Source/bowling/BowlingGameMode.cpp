@@ -250,13 +250,13 @@ FString ABowlingGameMode::CreateFrameNumbersString() const
 		{
 			if (FrameNum < NumFrames - 1)
 			{
-				FString part = FString::Printf(TEXT("│ %2d  "), FrameNum);
+				FString part = FString::Printf(TEXT("│ %2d  "), FrameNum+1);
 				FramesString += part;
 			}
 			else
 			{
 				// last frame.
-				FString part = FString::Printf(TEXT("│  %2d   "), FrameNum);
+				FString part = FString::Printf(TEXT("│  %2d   "), FrameNum+1);
 				FramesString += part;
 			}
 		}
