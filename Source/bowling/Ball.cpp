@@ -4,6 +4,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/PlayerController.h"
 
 // Sets default values
 ABall::ABall()
@@ -126,7 +127,7 @@ void ABall::Tick(float DeltaTime)
 			FHitResult HitResult;
 			if (PlayerController->GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
 			{
-				DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5, 12, FColor::Green);
+				// DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 5, 12, FColor::Green);
 				RotatePlayer(HitResult.ImpactPoint);
 			}
 		}
