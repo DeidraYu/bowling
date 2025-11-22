@@ -395,7 +395,7 @@ bool ABowlingGameMode::IsThrowFinished()
 		return false;
 	}
 
-	// If any pin does still move the trow is not finished
+	// If any pin does still move the throw is not finished
 	for (APin* Pin : Pins)
 	{
 		if (Pin->BaseMesh->IsSimulatingPhysics())
@@ -504,11 +504,9 @@ void ABowlingGameMode::OnRollOverTimerTimeout()
 		{
 			if (Pin->IsRemoved)
 			{
-				Pin->ResetPinLocation();
-				Pin->AddActorLocalOffset(FVector(60.0f, 0.0f, 100.0f));
+				Pin->Store();
 			}
 		}
-
 	}
 }
 
@@ -526,8 +524,7 @@ void ABowlingGameMode::OnFrameOverTimerTimeout()
 		Ball->ResetBallLocation();
 		for (APin* Pin : Pins)
 		{
-			Pin->ResetPinLocation();
-			Pin->IsRemoved = false;
+			Pin->Initialize();
 		}
 	}
 }

@@ -10,8 +10,8 @@ UCLASS()
 class BOWLING_API APin : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	APin();
 
@@ -22,13 +22,17 @@ protected:
 	virtual void BeginPlay() override;
 	FTransform InitialTransform;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	bool IsRemoved = false;
 
+	// Check if the pin is fallen or moved to remove it from the frame.
 	bool ShouldBeRemoved() const;
-	void ResetPinLocation();
 
+	// Store and hide the pin until the frame is over.
+	void Store();
 
+	// Put the pin back at is starting position (undo the effect of the Store() call)
+	void Initialize();
 };
