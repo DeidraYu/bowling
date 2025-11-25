@@ -56,6 +56,7 @@ There is quite some further work to do to improve this game.
   - Naming conventions:
     Because the real bowling games use the terms Roll and Frame, it is good to use them in code as well. However, sometimes this will be very confusing. For example, angles may be represented by (Pitch, Yaw, Roll), and the term Frame is higly overloaded for other things. Also, because the Kata asks to implement the Roll() function, the actually throwing of the ball should not be called Roll() because Roll() is reserved to adding only the scored pins per roll to the scoring system.
   - Minimize the shipping size of the executable package.
+  - Using the Unreal's TObjectPtr<> instead of plain C++ pointers.
   - And probably many more.
 
 ## Miscellaneous notes
